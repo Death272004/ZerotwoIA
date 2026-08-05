@@ -1,21 +1,22 @@
-# core/memory.py
-
+from pathlib import Path
 import sqlite3
 import threading
 from config import MAX_DB_ROWS
 
-DB_PATH = "data/memory.db"
+DB_PATH = Path(__file__).resolve().parents[1] / "data" / "memory.db"
 
 # Conexión persistente por thread — evita abrir/cerrar en cada operación
 _local = threading.local()
 
-def get_conn():
+
+def get_conn() -> sqlite3.Connection:
     if not hasattr(_local, "conn"):
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         _local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     return _local.conn
 
 
-def init_db():
+def init_db() -> None:
     conn = get_conn()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS memory (
@@ -29,7 +30,7 @@ def init_db():
     conn.commit()
 
 
-def save_message(role: str, content: str):
+def save_message(role: str, content: str) -> None:
     conn = get_conn()
     conn.execute(
         "INSERT INTO memory (role, content) VALUES (?, ?)",
@@ -55,7 +56,7 @@ def load_history(limit: int = 20) -> list[dict]:
     return list(reversed([{"role": r, "content": c} for r, c in rows]))
 
 
-def clear_memory():
+def clear_memory() -> None:
     conn = get_conn()
     conn.execute("DELETE FROM memory")
     conn.commit()

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ZeroTwoIA - Guía Rápida de Uso
 
 ## ⚡ Inicio Rápido
@@ -20,7 +19,7 @@ ollama serve
 **Terminal 2 - ZeroTwo:**
 
 ```powershell
-cd "c:\Users\rrpin\Documents\Proyectos personales\Proyectos personales\ZeroIACLaude - copia\ZeroTwoIA"
+cd "ruta\a\ZeroTwoIA"
 python main.py
 ```
 
@@ -82,9 +81,15 @@ ZeroTwo: [respuesta en voz + texto]
 
 ✅ Python 3.11
 ✅ Ollama + modelo "mistral"
-✅ Dependencias: edge-tts, ollama, faster-whisper, sounddevice, soundfile
+✅ Dependencias Python del archivo `requirements.txt`
 
-Todos ya instalados en el venv.
+Instalación recomendada:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+```
 
 ---
 
@@ -134,6 +139,3 @@ ZeroTwoIA/
 1. Verifica que `ollama list` muestre "mistral"
 2. Inicia con `INICIAR.bat` o manualmente
 3. Escribe "Hola" y disfruta 🎉
-=======
-# ZerotwoIA
->>>>>>> dd578ea24b9fd5b2185d6c9457f3b6e975a2ef20

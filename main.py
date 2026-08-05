@@ -1,12 +1,8 @@
-# main.py
-
 from functools import lru_cache
 import threading
-from io import StringIO
-import sys
 
 from core.intent import detect_intent
-from core.core_brain import enviar_mensaje, enviar_mensaje_streaming
+from core.core_brain import enviar_mensaje_streaming
 from agents.system_agent import execute_command
 from agents.web_agent import handle as web_handle
 from agents.code_agent import handle as code_handle
@@ -17,62 +13,60 @@ def _cached_intent(text: str) -> tuple:
     return tuple(sorted(detect_intent(text).items()))
 
 
-def execute_action(action: dict):
+def execute_action(action: dict) -> None:
     """Ejecuta la acción que ZeroTwo indicó en su respuesta."""
     t = action.get("type")
     if t == "open_app":
         execute_command(action)
     elif t == "web_search":
-        web_handle({"type": "web", "query": action.get("query", ""), "raw": action.get("query", "")})
+        query = action.get("query", "")
+        web_handle({"type": "web", "query": query, "raw": query})
     elif t == "open_url":
-        web_handle({"type": "web", "query": action.get("target", ""), "raw": action.get("target", "")})
+        target = action.get("target", "")
+        web_handle({"type": "web", "query": target, "raw": target})
     elif t == "youtube":
-        web_handle({"type": "web", "query": "youtube " + action.get("query", ""), "raw": action.get("query", "")})
+        query = action.get("query", "")
+        web_handle({"type": "web", "query": "youtube " + query, "raw": query})
 
 
-def tts_background(text: str):
+def tts_background(text: str) -> None:
     """Ejecuta TTS en background sin bloquear la UI."""
     from voice.tts import speak_and_play
     try:
         speak_and_play(text)
     except Exception:
-        pass  # Falla silenciosa
+        pass
 
 
-def responder_con_streaming(user_input: str):
+def _say_tool_result(result: str) -> None:
+    print(f"ZeroTwo: {result}")
+    threading.Thread(target=tts_background, args=(result,), daemon=True).start()
+
+
+def responder_con_streaming(user_input: str) -> None:
     """
     Responde con streaming: muestra texto INMEDIATAMENTE mientras se genera,
     y ejecuta TTS en background para no bloquear.
     """
-    from voice.tts import speak_and_play
-    
     # Detectar intención rápido
     intent = dict(_cached_intent(user_input))
-    
-    if intent["type"] == "system":
-        result = execute_command(intent)
-        print(f"ZeroTwo: {result}")
-        threading.Thread(target=tts_background, args=(result,), daemon=True).start()
+
+    intent_type = intent.get("type")
+    if intent_type == "system":
+        _say_tool_result(execute_command(intent))
         return
-    if intent["type"] == "web":
-        result = web_handle(intent)
-        print(f"ZeroTwo: {result}")
-        threading.Thread(target=tts_background, args=(result,), daemon=True).start()
+    if intent_type == "web":
+        _say_tool_result(web_handle(intent))
         return
-    if intent["type"] == "code":
-        result = code_handle(intent)
-        print(f"ZeroTwo: {result}")
-        threading.Thread(target=tts_background, args=(result,), daemon=True).start()
+    if intent_type == "code":
+        _say_tool_result(code_handle(intent))
         return
     
     # Para conversación: usar streaming
     print("ZeroTwo: ", end="", flush=True)  # Mostrar "ZeroTwo:" al instante
     
-    respuesta_buffer = []
-    
     def on_chunk(chunk):
         """Callback para cada chunk recibido."""
-        respuesta_buffer.append(chunk)
         print(chunk, end="", flush=True)  # Mostrar en tiempo real
     
     texto, accion = enviar_mensaje_streaming(user_input, callback=on_chunk)
@@ -85,7 +79,7 @@ def responder_con_streaming(user_input: str):
     threading.Thread(target=tts_background, args=(texto,), daemon=True).start()
 
 
-def loop_texto():
+def loop_texto() -> None:
     print("ZeroTwo: En línea. [modo texto]")
     while True:
         try:
@@ -103,7 +97,7 @@ def loop_texto():
             print(f"ZeroTwo: Algo falló — {e}")
 
 
-def loop_híbrido():
+def loop_híbrido() -> None:
     """
     Modo unificado: 
     - Enter vacío → graba voz (6 seg)
