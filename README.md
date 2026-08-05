@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ZeroTwoIA - Guía Rápida de Uso
 
 ## ⚡ Inicio Rápido
@@ -133,3 +134,6 @@ ZeroTwoIA/
 1. Verifica que `ollama list` muestre "mistral"
 2. Inicia con `INICIAR.bat` o manualmente
 3. Escribe "Hola" y disfruta 🎉
+=======
+# ZerotwoIA
+>>>>>>> dd578ea24b9fd5b2185d6c9457f3b6e975a2ef20
