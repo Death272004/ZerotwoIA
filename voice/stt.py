@@ -1,10 +1,8 @@
+import threading
+
 # voice/stt.py
 
-import sounddevice as sd
-import numpy as np
-from scipy.io.wavfile import write
 from faster_whisper import WhisperModel
-import threading
 
 # Carga lazy — el modelo solo se inicializa la primera vez que se usa
 _model = None
@@ -21,6 +19,7 @@ def get_model() -> WhisperModel:
 def _detectar_silencio(path: str, threshold: float = 0.01) -> bool:
     """Detecta si el archivo de audio es principalmente silencio."""
     try:
+        import numpy as np
         from scipy.io.wavfile import read
         fs, audio = read(path)
         # Normalizar
@@ -33,6 +32,15 @@ def _detectar_silencio(path: str, threshold: float = 0.01) -> bool:
 
 def grabar_audio(path: str = "audio.wav", duracion: int = 5, fs: int = 16000) -> str:
     """Graba audio del micrófono. fs=16000 es lo que Whisper espera nativamente."""
+    try:
+        import sounddevice as sd
+        from scipy.io.wavfile import write
+    except OSError as e:
+        raise RuntimeError(
+            "No se pudo inicializar el micrófono. Instala PortAudio o revisa "
+            "los drivers de audio del sistema."
+        ) from e
+
     print(f"  🎤 Grabando durante {duracion} segundos...")
     audio = sd.rec(int(duracion * fs), samplerate=fs, channels=1)
     sd.wait()
