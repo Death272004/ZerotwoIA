@@ -8,7 +8,8 @@ from config import ENABLE_LLM_INTENT_FALLBACK, MODEL_NAME
 _PATTERNS = {
     "system": re.compile(
         r"\b(abre?|abrir|lanza?|lanzar|ejecuta?|ejecutar|inicia?|iniciar)\b.{0,30}"
-        r"\b(chrome|firefox|notepad|vscode|visual studio|bloc de notas|calculadora)\b",
+        r"\b(chrome|firefox|notepad|vscode|visual studio|bloc de notas|calculadora|"
+        r"word|excel|powerpoint|power point)\b",
         re.IGNORECASE
     ),
     "web": re.compile(
@@ -26,13 +27,15 @@ _PATTERNS = {
 
 # Extrae el nombre de app mencionado
 _APP_NAMES = re.compile(
-    r"\b(chrome|firefox|notepad|vscode|visual studio|bloc de notas|calculadora)\b",
+    r"\b(chrome|firefox|notepad|vscode|visual studio|bloc de notas|calculadora|"
+    r"word|excel|powerpoint|power point)\b",
     re.IGNORECASE
 )
 
 _APP_ALIASES = {
     "visual studio": "vscode",
     "bloc de notas": "notepad",
+    "power point": "powerpoint",
 }
 
 

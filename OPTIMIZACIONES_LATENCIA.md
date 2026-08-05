@@ -52,9 +52,22 @@ Ejemplo:
 
 ### 7. **Contexto Reducido**
 
-- **Cambio**: `MAX_HISTORY = 8` y `num_ctx = 2048` en `config.py`
+- **Cambio**: `MAX_HISTORY = 4`, `num_ctx = 1024` y `num_predict = 120` en `config.py`
 - **Impacto**: Ollama procesa menos texto por turno
 - **Tradeoff**: conserva menos historial reciente, pero responde más rápido
+
+### 8. **Modelo Rápido por Defecto**
+
+- **Cambio**: `MODEL_NAME = os.getenv("ZEROTWO_MODEL", "llama3.2:1b")`
+- **Impacto**: usa un modelo mucho más pequeño que `mistral` para responder casi al instante en equipos modestos
+- **Tradeoff**: menor profundidad que Mistral, pero mejor sensación de asistente local rápido
+- **Override**: puedes volver a Mistral con `set ZEROTWO_MODEL=mistral` antes de iniciar
+
+### 9. **Prompt de Personalidad Recortado**
+
+- **Cambio**: prompt más corto, sin ejemplos técnicos ni tags internos
+- **Impacto**: evita que el modelo copie instrucciones y reduce tokens de entrada
+- **Resultado**: respuestas más breves, más en personaje y menos costosas
 
 ---
 
@@ -62,28 +75,28 @@ Ejemplo:
 
 ### **OPCIÓN A: Cambiar Modelo (Muy Rápido)**
 
-Mistral es potente pero lento (~2-3s). Opciones más rápidas en Ollama:
+Mistral es potente pero lento. Opciones más rápidas en Ollama:
 
 ```bash
-# Descargar modelo más rápido (0.5-1.5s por respuesta)
-ollama pull neural-chat:latest    # ⚡ RECOMENDADO: Más rápido, buen quality
-ollama pull orca-2:latest         # ⚡ Alternativa: Muy rápido pero más tonto
-ollama pull tinyllama:latest      # ⚡⚡ Ultra rápido pero respuestas pobres
+# Descargar modelo más rápido
+ollama pull llama3.2:1b           # ⚡ RECOMENDADO: rápido y usable
+ollama pull qwen2.5:1.5b          # ⚡ Alternativa sólida
+ollama pull tinyllama:latest      # ⚡⚡ Ultra rápido, menor calidad
 ```
 
 **Para cambiar en `config.py`:**
 
 ```python
-MODEL_NAME = "neural-chat:latest"  # En lugar de "mistral"
+MODEL_NAME = "llama3.2:1b"  # En lugar de "mistral"
 ```
 
 **Benchmark aproximado:**
 | Modelo | Latencia | Calidad |
 |--------|----------|---------|
-| mistral | 2-3s | ⭐⭐⭐⭐⭐ |
-| neural-chat | 1-1.5s | ⭐⭐⭐⭐ |
-| orca-2 | 0.7-1s | ⭐⭐⭐⭐ |
-| tinyllama | 0.3-0.5s | ⭐⭐⭐ |
+| mistral | lento | ⭐⭐⭐⭐⭐ |
+| llama3.2:1b | rápido | ⭐⭐⭐⭐ |
+| qwen2.5:1.5b | rápido | ⭐⭐⭐⭐ |
+| tinyllama | muy rápido | ⭐⭐⭐ |
 
 ---
 
@@ -223,16 +236,15 @@ print(f"Con streaming total: {time.time() - start:.2f}s")
 
 ```powershell
 # Terminal nueva:
-ollama pull neural-chat:latest
+ollama pull llama3.2:1b
 
-# Editar: config.py
-# Cambiar: MODEL_NAME = "mistral"
-# Por: MODEL_NAME = "neural-chat"
+# Opcional: probar otro modelo sin editar archivos
+set ZEROTWO_MODEL=mistral
 
-# Listo, próxima ejecución usará neural-chat
+# Listo, próxima ejecución usará el modelo elegido
 ```
 
-**Resultado**: ~50% más rápido inmediatamente.
+**Resultado**: mucha menos espera en respuestas normales.
 
 ---
 

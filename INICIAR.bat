@@ -4,7 +4,8 @@ cd /d "%~dp0"
 
 set "VENV_DIR=%~dp0.venv"
 set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
-set "MODEL_NAME=mistral"
+if "%ZEROTWO_MODEL%"=="" set "ZEROTWO_MODEL=llama3.2:1b"
+set "MODEL_NAME=%ZEROTWO_MODEL%"
 
 echo ========================================
 echo ZeroTwoIA - inicio automatico
