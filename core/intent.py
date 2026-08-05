@@ -2,7 +2,7 @@
 
 import re
 import ollama  # type: ignore
-from config import MODEL_NAME
+from config import ENABLE_LLM_INTENT_FALLBACK, MODEL_NAME
 
 # Patrones rápidos — se evalúan antes de llamar al LLM
 _PATTERNS = {
@@ -88,4 +88,7 @@ def detect_intent(text: str) -> dict:
             if intent_type == "code":
                 return {"type": "code", "task": text, "raw": text}
 
-    return _llm_fallback(text)
+    if ENABLE_LLM_INTENT_FALLBACK:
+        return _llm_fallback(text)
+
+    return {"type": "chat", "raw": text}

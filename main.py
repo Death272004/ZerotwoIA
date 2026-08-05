@@ -1,5 +1,6 @@
 from functools import lru_cache
 import threading
+from time import perf_counter
 
 from core.intent import detect_intent
 from core.core_brain import enviar_mensaje_streaming
@@ -48,29 +49,47 @@ def responder_con_streaming(user_input: str) -> None:
     Responde con streaming: muestra texto INMEDIATAMENTE mientras se genera,
     y ejecuta TTS en background para no bloquear.
     """
+    started_at = perf_counter()
+
     # Detectar intención rápido
     intent = dict(_cached_intent(user_input))
+    intent_done_at = perf_counter()
 
     intent_type = intent.get("type")
     if intent_type == "system":
         _say_tool_result(execute_command(intent))
+        print(f"⏱ intención: {intent_done_at - started_at:.2f}s | total: {perf_counter() - started_at:.2f}s")
         return
     if intent_type == "web":
         _say_tool_result(web_handle(intent))
+        print(f"⏱ intención: {intent_done_at - started_at:.2f}s | total: {perf_counter() - started_at:.2f}s")
         return
     if intent_type == "code":
         _say_tool_result(code_handle(intent))
+        print(f"⏱ intención: {intent_done_at - started_at:.2f}s | total: {perf_counter() - started_at:.2f}s")
         return
     
     # Para conversación: usar streaming
     print("ZeroTwo: ", end="", flush=True)  # Mostrar "ZeroTwo:" al instante
+    first_chunk_at = None
     
     def on_chunk(chunk):
         """Callback para cada chunk recibido."""
+        nonlocal first_chunk_at
+        if first_chunk_at is None:
+            first_chunk_at = perf_counter()
         print(chunk, end="", flush=True)  # Mostrar en tiempo real
     
     texto, accion = enviar_mensaje_streaming(user_input, callback=on_chunk)
+    response_done_at = perf_counter()
     print()  # Nueva línea al final
+    first_text = (first_chunk_at or response_done_at) - started_at
+    print(
+        "⏱ "
+        f"intención: {intent_done_at - started_at:.2f}s | "
+        f"primer texto: {first_text:.2f}s | "
+        f"respuesta: {response_done_at - started_at:.2f}s"
+    )
     
     if accion:
         threading.Thread(target=execute_action, args=(accion,), daemon=True).start()

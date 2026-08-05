@@ -29,6 +29,33 @@
 - **Impacto**: Regex de intención en cache (rápido para preguntas comunes)
 - **Tiempo ahorrado**: ~100ms por cada hit de cache
 
+### 5. **Clasificación LLM Desactivada por Defecto**
+
+- **Cambio**: `ENABLE_LLM_INTENT_FALLBACK = False` en `config.py`
+- **Impacto**: los mensajes normales ya no hacen una llamada extra a Ollama solo para clasificarse
+- **Tiempo ahorrado**: normalmente evita una espera completa antes de empezar la respuesta real
+- **Tradeoff**: si lo activas, detecta mejor herramientas ambiguas, pero responde más lento
+
+### 6. **Contador de Latencia en Consola**
+
+- **Cambio**: `main.py` muestra tiempos al final de cada respuesta
+- **Métricas**:
+  - `intención`: cuánto tardó en decidir si era chat, web, sistema o código
+  - `primer texto`: cuánto tardó en aparecer el primer token visible
+  - `respuesta`: cuánto tardó en terminar la respuesta completa
+
+Ejemplo:
+
+```text
+⏱ intención: 0.00s | primer texto: 0.62s | respuesta: 2.41s
+```
+
+### 7. **Contexto Reducido**
+
+- **Cambio**: `MAX_HISTORY = 8` y `num_ctx = 2048` en `config.py`
+- **Impacto**: Ollama procesa menos texto por turno
+- **Tradeoff**: conserva menos historial reciente, pero responde más rápido
+
 ---
 
 ## 💡 Mejoras Adicionales (Sin Código)
