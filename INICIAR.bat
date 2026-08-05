@@ -1,16 +1,87 @@
 @echo off
-REM ZeroTwoIA - Iniciar todo en 2 ventanas
+setlocal
+cd /d "%~dp0"
 
-echo Iniciando Ollama...
-start "Ollama Server" cmd /k "ollama serve"
+set "VENV_DIR=%~dp0.venv"
+set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
+set "MODEL_NAME=mistral"
 
-echo Esperando 3 segundos...
-timeout /t 3
+echo ========================================
+echo ZeroTwoIA - inicio automatico
+echo ========================================
+echo.
+
+if not exist "%PYTHON_EXE%" (
+    echo Creando entorno virtual en .venv...
+    where python >nul 2>&1
+    if not errorlevel 1 (
+        python -m venv "%VENV_DIR%"
+    ) else (
+        where py >nul 2>&1
+        if not errorlevel 1 (
+            py -3 -m venv "%VENV_DIR%"
+        ) else (
+            echo ERROR: No encontre Python.
+            echo Instala Python 3.10+ desde https://www.python.org/downloads/
+            echo Marca la opcion "Add python.exe to PATH" durante la instalacion.
+            pause
+            exit /b 1
+        )
+    )
+)
+
+if not exist "%PYTHON_EXE%" (
+    echo ERROR: No se pudo crear el entorno virtual.
+    pause
+    exit /b 1
+)
+
+echo Instalando/actualizando dependencias...
+"%PYTHON_EXE%" -m pip install --upgrade pip
+if errorlevel 1 (
+    echo ERROR: No se pudo actualizar pip.
+    pause
+    exit /b 1
+)
+
+"%PYTHON_EXE%" -m pip install -r requirements.txt
+if errorlevel 1 (
+    echo ERROR: No se pudieron instalar las dependencias.
+    pause
+    exit /b 1
+)
+
+where ollama >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: No encontre Ollama.
+    echo Instala Ollama desde https://ollama.com/download
+    pause
+    exit /b 1
+)
+
+ollama list >nul 2>&1
+if errorlevel 1 (
+    echo Iniciando Ollama...
+    start "Ollama Server" cmd /k "ollama serve"
+    timeout /t 5 /nobreak >nul
+)
+
+ollama list | findstr /I /C:"%MODEL_NAME%" >nul 2>&1
+if errorlevel 1 (
+    echo Descargando modelo %MODEL_NAME%...
+    ollama pull %MODEL_NAME%
+    if errorlevel 1 (
+        echo ERROR: No se pudo descargar el modelo %MODEL_NAME%.
+        pause
+        exit /b 1
+    )
+)
 
 echo.
-echo Iniciando ZeroTwo...
-start "ZeroTwo" cmd /k "cd /d ""%~dp0"" && python main.py"
+echo Iniciando ZeroTwoIA...
+echo.
+"%PYTHON_EXE%" main.py
 
 echo.
-echo ✓ Ollama y ZeroTwo iniciados
-echo ✓ Cierra estas ventanas cuando termines
+echo ZeroTwoIA se cerro.
+pause
