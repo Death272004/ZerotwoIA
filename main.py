@@ -44,6 +44,25 @@ def _say_tool_result(result: str) -> None:
     threading.Thread(target=tts_background, args=(result,), daemon=True).start()
 
 
+def _record_voice_once(duration: int = 6) -> str:
+    """Graba una sola toma de voz y retorna el texto transcrito."""
+    from voice.stt import grabar_audio, transcribir
+    from voice.tts import is_playing, stop_playback
+
+    if is_playing():
+        print("  Deteniendo voz antes de abrir el microfono...")
+        stop_playback()
+
+    path = grabar_audio(duracion=duration)
+    print("  Procesando voz...")
+    text = transcribir(path).strip()
+    if text:
+        print(f"  Entendi: {text}")
+    else:
+        print("  No detecte voz clara. Escribe o di 'voz' para intentar otra vez.\n")
+    return text
+
+
 def responder_con_streaming(user_input: str) -> None:
     """
     Responde con streaming: muestra texto INMEDIATAMENTE mientras se genera,
@@ -119,14 +138,13 @@ def loop_texto() -> None:
 def loop_híbrido() -> None:
     """
     Modo unificado: 
-    - Enter vacío → graba voz (6 seg)
+    - "voz" / "audio" / Enter vacio -> graba una sola toma de voz
     - Escribir texto + Enter → usa el texto
-    - ZeroTwo responde INMEDIATAMENTE en texto + voz en background
+    - "salir" -> cierra el asistente
+    - ZeroTwo responde en texto y voz en background
     """
-    from voice.stt import grabar_audio, transcribir
-
     print("ZeroTwo: En línea. [modo híbrido - voz + texto]")
-    print("  Enter vacío = micrófono | Escribe algo = texto\n")
+    print("  Escribe texto = chat | voz/audio o Enter vacio = microfono | salir = cerrar\n")
 
     while True:
         try:
@@ -135,22 +153,22 @@ def loop_híbrido() -> None:
             print("\nZeroTwo: Hasta la próxima.")
             break
 
-        # Si presionó Enter vacío, graba voz
-        if not user_input:
+        command = user_input.lower()
+        if command in {"salir", "exit", "quit", "cerrar"}:
+            print("ZeroTwo: Hasta la próxima.")
+            break
+
+        # Si pidio voz, graba una sola toma. No queda en modo escucha continua.
+        if not user_input or command in {"voz", "audio", "microfono", "mic"}:
             try:
-                path = grabar_audio(duracion=6)
-                print("  ⏳ Procesando voz (puede tardar unos segundos)...")
-                user_input = transcribir(path).strip()
-                if user_input:
-                    print(f"  ✓ Entendí: {user_input}")
-                else:
-                    print("  ✗ No detecté voz clara, intenta de nuevo\n")
+                user_input = _record_voice_once(duration=6)
+                if not user_input:
                     continue
             except KeyboardInterrupt:
-                print("\n  ⏹ Cancelado")
+                print("\n  Cancelado")
                 continue
             except Exception as e:
-                print(f"  ✗ Error de micrófono: {e}\n")
+                print(f"  Error de microfono: {e}\n")
                 continue
 
         # Procesa la entrada con streaming (voz o texto)

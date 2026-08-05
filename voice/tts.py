@@ -1,4 +1,5 @@
 import asyncio
+import threading
 from pathlib import Path
 from edge_tts import Communicate
 
@@ -12,6 +13,26 @@ VOICE_BY_LANGUAGE = {
 }
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_playback_active = threading.Event()
+
+
+def is_playing() -> bool:
+    """Indica si el reproductor de voz sigue hablando."""
+    return _playback_active.is_set()
+
+
+def stop_playback() -> None:
+    """Detiene la voz actual antes de abrir el microfono."""
+    if winsound is None:
+        _playback_active.clear()
+        return
+
+    try:
+        winsound.PlaySound(None, 0)
+    except Exception:
+        pass
+    finally:
+        _playback_active.clear()
 
 
 def speak(text: str, output_path: str = "data/response.wav", language: str = "es") -> str:
@@ -46,8 +67,12 @@ def speak_and_play(text: str, language: str = "es") -> None:
     if not path or winsound is None:
         return
 
-    # Reproduce con winsound nativo (no bloqueante)
+    # Esta funcion ya corre en un thread de fondo; reproducir en modo bloqueante
+    # permite saber cuando termino y evita que el microfono capture la propia voz.
     try:
-        winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+        _playback_active.set()
+        winsound.PlaySound(path, winsound.SND_FILENAME)
     except Exception:
         pass  # Si falla, continúa silenciosamente
+    finally:
+        _playback_active.clear()
