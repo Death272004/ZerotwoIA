@@ -1,9 +1,11 @@
 import math
 import queue
 import random
+import sys
 import threading
 import time
 import tkinter as tk
+from pathlib import Path
 from tkinter import ttk
 from time import perf_counter
 
@@ -27,6 +29,12 @@ BOT_BG = "#1d2230"
 ERROR_BG = "#3b1d2b"
 
 
+def resource_path(relative_path):
+    """Devuelve una ruta valida tanto en desarrollo como dentro de PyInstaller."""
+    base_path = getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)
+    return Path(base_path) / relative_path
+
+
 class ZeroTwoApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -34,6 +42,7 @@ class ZeroTwoApp(tk.Tk):
         self.geometry("980x680")
         self.minsize(820, 560)
         self.configure(bg=APP_BG)
+        self._set_window_icon()
 
         self.events = queue.Queue()
         self.busy = False
@@ -47,6 +56,15 @@ class ZeroTwoApp(tk.Tk):
         self._build_layout()
         self._animate_spectrum()
         self._drain_events()
+
+    def _set_window_icon(self):
+        icon_path = resource_path("assets/zerotwo_icon.ico")
+        if not icon_path.exists():
+            return
+        try:
+            self.iconbitmap(str(icon_path))
+        except tk.TclError:
+            pass
 
     def _build_style(self):
         style = ttk.Style(self)

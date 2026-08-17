@@ -38,6 +38,30 @@ set ZEROTWO_MODE=console
 INICIAR.bat
 ```
 
+### Opción 3: Ejecutable de Windows
+
+Para generar una carpeta distribuible con `ZeroTwoIA.exe`:
+
+```bat
+COMPILAR_EXE.bat
+```
+
+El resultado queda en:
+
+```text
+dist\ZeroTwoIA\ZeroTwoIA.exe
+```
+
+Copia la carpeta completa `dist\ZeroTwoIA` si quieres mover la app a otro equipo.
+El ejecutable incluye la interfaz visual y el icono de ZeroTwoIA, pero sigue
+necesitando Ollama instalado en Windows para responder con el modelo local.
+
+Para ejecutar el build desde el proyecto:
+
+```bat
+EJECUTAR_EXE.bat
+```
+
 ---
 
 ## 🔧 Solución de problemas
