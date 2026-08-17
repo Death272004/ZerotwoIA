@@ -1,4 +1,6 @@
 import threading
+import time
+from pathlib import Path
 
 # voice/stt.py
 
@@ -30,9 +32,10 @@ def _detectar_silencio(path: str, threshold: float = 0.01) -> bool:
         return False
 
 
-def grabar_audio(path: str = "audio.wav", duracion: int = 5, fs: int = 16000) -> str:
+def grabar_audio(path: str = "audio.wav", duracion: int = 5, fs: int = 16000, level_callback=None) -> str:
     """Graba audio del micrófono. fs=16000 es lo que Whisper espera nativamente."""
     try:
+        import numpy as np
         import sounddevice as sd
         from scipy.io.wavfile import write
     except OSError as e:
@@ -41,11 +44,33 @@ def grabar_audio(path: str = "audio.wav", duracion: int = 5, fs: int = 16000) ->
             "los drivers de audio del sistema."
         ) from e
 
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     print(f"  🎤 Grabando durante {duracion} segundos...")
+    if level_callback:
+        frames = []
+
+        def _callback(indata, _frames, _time_info, status):
+            if status:
+                return
+            frames.append(indata.copy())
+            rms = float(np.sqrt(np.mean(np.square(indata))))
+            level_callback(min(1.0, rms * 12.0))
+
+        with sd.InputStream(samplerate=fs, channels=1, dtype="float32", callback=_callback):
+            end_at = time.time() + duracion
+            while time.time() < end_at:
+                sd.sleep(50)
+
+        audio = np.concatenate(frames, axis=0) if frames else np.zeros((1, 1), dtype=np.float32)
+        write(str(output_path), fs, audio)
+        return str(output_path)
+
     audio = sd.rec(int(duracion * fs), samplerate=fs, channels=1)
     sd.wait()
-    write(path, fs, audio)
-    return path
+    write(str(output_path), fs, audio)
+    return str(output_path)
 
 
 def transcribir(path: str) -> str:

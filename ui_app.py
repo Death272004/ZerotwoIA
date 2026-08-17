@@ -40,6 +40,7 @@ class ZeroTwoApp(tk.Tk):
         self.mode = "idle"
         self.bot_stream_widget = None
         self.bot_stream_text = ""
+        self.audio_level = 0.0
         self.bars = []
 
         self._build_style()
@@ -247,7 +248,11 @@ class ZeroTwoApp(tk.Tk):
         try:
             from voice.stt import grabar_audio, transcribir
 
-            path = grabar_audio(path="data/input_voice.wav", duracion=5)
+            path = grabar_audio(
+                path="data/input_voice.wav",
+                duracion=5,
+                level_callback=lambda level: self.events.put(("audio_level", level)),
+            )
             self.events.put(("status", "Transcribiendo voz..."))
             text = transcribir(path).strip()
             if not text:
@@ -331,6 +336,8 @@ class ZeroTwoApp(tk.Tk):
         name = event[0]
         if name == "status":
             self._set_mode("thinking", event[1])
+        elif name == "audio_level":
+            self.audio_level = max(self.audio_level, float(event[1]))
         elif name == "voice_empty":
             self._add_message("ZeroTwo", "No te escuche claro, Darling. Prueba otra vez.", "bot")
             self._set_busy(False)
@@ -409,7 +416,7 @@ class ZeroTwoApp(tk.Tk):
 
         if self.mode == "recording":
             color = ACCENT_2
-            base = 0.55
+            base = max(0.18, self.audio_level)
         elif self.mode == "speaking" or is_playing():
             color = ACCENT
             base = 0.75
@@ -435,6 +442,7 @@ class ZeroTwoApp(tk.Tk):
             self.spectrum.coords(item, x1, y1, x2, y2)
             self.spectrum.itemconfig(item, fill=color)
 
+        self.audio_level *= 0.82
         self.after(55, self._animate_spectrum)
 
 
