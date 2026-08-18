@@ -1,62 +1,95 @@
-# ZeroTwoIA - Guía Rápida de Uso
+# ZeroTwoIA
 
-## ⚡ Inicio Rápido
+Asistente local de escritorio inspirado en Zero Two, con interfaz visual, chat,
+voz, memoria, comandos para abrir aplicaciones de Windows y modelo local con
+Ollama.
 
-### Opción 1: App visual (Recomendado)
+El objetivo del proyecto es tener una asistente tipo copiloto/Jarvis, pero con
+tematica Zero Two: rapida, directa, expresiva y con respuestas por texto y voz.
 
-1. Ve a la carpeta del proyecto
-2. **Doble clic en `INICIAR.bat`**
-3. Se abre la ventana de ZeroTwoIA
+## Funciones actuales
 
-La app visual incluye:
-
-- Chat dedicado para escribir y leer respuestas.
-- Botón de micrófono para hablarle.
-- Botón para cambiar la voz y escuchar una prueba rápida.
-- Respuesta por voz con `edge-tts`.
+- Interfaz visual propia con chat dedicado.
+- Respuesta por texto y voz.
+- Boton de microfono para hablarle.
+- Boton para cambiar la voz desde la interfaz.
+- Presentacion por voz al iniciar.
+- Espectro circular tipo HUD que reacciona a microfono, pensamiento y voz.
 - Contador de tiempo de respuesta.
-- Espectro animado para grabación, pensamiento y voz.
+- Memoria local con SQLite.
+- Comandos para abrir aplicaciones de Windows.
+- Build de Windows con `ZeroTwoIA.exe` + dependencias.
+- Script de instalacion completa para PC nueva.
 
-### Opción 0: Instalar todo en una PC nueva
+## Requisitos
 
-Después de clonar el proyecto en Windows, ejecuta:
+Para una instalacion normal en Windows necesitas:
 
-```bat
-INSTALAR_TODO.bat
+- Windows 10/11.
+- Git.
+- Python 3.10 o 3.11.
+- Ollama.
+- Internet la primera vez para instalar dependencias y descargar el modelo.
+- Microfono y salida de audio si quieres usar voz.
+
+El modelo por defecto es:
+
+```text
+llama3.2:1b
 ```
 
-Ese script verifica Python y Ollama, intenta instalarlos con `winget` si faltan,
-crea `.venv`, instala dependencias, descarga el modelo `llama3.2:1b`, compila el
-`.exe` y crea el acceso directo del escritorio.
+Se usa por velocidad. Puedes cambiarlo por otro modelo de Ollama si prefieres
+mas calidad.
 
-### Opción 2: Consola manual
+## Instalacion en una PC nueva
 
-**Terminal 1 - Ollama:**
+Despues de clonar el repositorio:
 
 ```powershell
-ollama serve
+git clone https://github.com/Death272004/ZerotwoIA.git
+cd ZerotwoIA
+.\INSTALAR_TODO.bat
 ```
 
-**Terminal 2 - ZeroTwo:**
+`INSTALAR_TODO.bat` intenta preparar todo el entorno:
+
+- Verifica Python.
+- Intenta instalar Python con `winget` si falta.
+- Crea `.venv`.
+- Instala dependencias de `requirements.txt`.
+- Verifica Ollama.
+- Intenta instalar Ollama con `winget` si falta.
+- Inicia Ollama si no esta respondiendo.
+- Descarga `llama3.2:1b` si no esta instalado.
+- Compila el `.exe`.
+- Crea un acceso directo en el escritorio.
+
+Si algo falla, el script deja la ventana abierta y muestra que punto debes
+corregir.
+
+## Uso normal
+
+Desde la carpeta del proyecto:
 
 ```powershell
-cd "ruta\a\ZeroTwoIA"
-python main.py
+.\INICIAR.bat
 ```
 
-También puedes usar el `.bat` en modo consola:
+Esto abre la app visual por defecto.
+
+Para usar el modo consola:
 
 ```powershell
 set ZEROTWO_MODE=console
-INICIAR.bat
+.\INICIAR.bat
 ```
 
-### Opción 3: Ejecutable de Windows
+## Compilar el ejecutable
 
-Para generar una carpeta distribuible con `ZeroTwoIA.exe`:
+Para generar el ejecutable distribuible:
 
-```bat
-COMPILAR_EXE.bat
+```powershell
+.\COMPILAR_EXE.bat
 ```
 
 El resultado queda en:
@@ -65,135 +98,248 @@ El resultado queda en:
 dist\ZeroTwoIA\ZeroTwoIA.exe
 ```
 
-Copia la carpeta completa `dist\ZeroTwoIA` si quieres mover la app a otro equipo.
-El ejecutable incluye la interfaz visual y el icono de ZeroTwoIA, pero sigue
-necesitando Ollama instalado en Windows para responder con el modelo local.
+Importante: esta version es `.exe + dependencias`. Si quieres mover la app a
+otro equipo, copia la carpeta completa:
 
-Para ejecutar el build desde el proyecto:
-
-```bat
-EJECUTAR_EXE.bat
+```text
+dist\ZeroTwoIA
 ```
 
----
+El otro equipo tambien necesita Ollama instalado y el modelo descargado.
 
-## 🔧 Solución de problemas
-
-### Error: "Ollama no responde"
-
-**Solución:**
+Para ejecutar el build ya compilado:
 
 ```powershell
-# Terminal nueva - Verifica que mistral está descargado
+.\EJECUTAR_EXE.bat
+```
+
+## Acceso directo con icono
+
+Despues de compilar, puedes crear el acceso directo del escritorio:
+
+```powershell
+.\CREAR_ACCESO_DIRECTO.bat
+```
+
+El acceso directo apunta a:
+
+```text
+dist\ZeroTwoIA\ZeroTwoIA.exe
+```
+
+Si Windows muestra un icono viejo, elimina el acceso directo anterior y ejecuta
+`CREAR_ACCESO_DIRECTO.bat` otra vez.
+
+## Cambiar modelo de Ollama
+
+Modelo rapido recomendado:
+
+```powershell
+set ZEROTWO_MODEL=llama3.2:1b
+.\INICIAR.bat
+```
+
+Modelo con mas calidad, pero mas lento:
+
+```powershell
+set ZEROTWO_MODEL=mistral
+.\INICIAR.bat
+```
+
+Tambien puedes probar otros modelos instalados en Ollama:
+
+```powershell
+set ZEROTWO_MODEL=llama3.1:8b
+.\INICIAR.bat
+```
+
+Mientras mas grande sea el modelo, mas tardara en responder.
+
+## Cambiar voz
+
+La interfaz incluye el boton `Cambiar voz`. Al presionarlo:
+
+- Cambia entre voces disponibles.
+- Guarda la voz elegida en `data/voice_config.json`.
+- Reproduce una frase corta de prueba.
+- Usa esa voz en las siguientes respuestas.
+
+Tambien puedes configurar la voz desde PowerShell:
+
+```powershell
+set ZEROTWO_VOICE=es-MX-DaliaNeural
+set ZEROTWO_VOICE_RATE=+8%
+set ZEROTWO_VOICE_PITCH=+12Hz
+.\INICIAR.bat
+```
+
+Nota: el proyecto no clona voces de actrices reales. Usa voces neurales de
+`edge-tts` configuradas para acercarse al estilo deseado.
+
+## Comandos para abrir aplicaciones
+
+Puedes escribir comandos como:
+
+```text
+abre word
+abre excel
+abre powerpoint
+abre chrome
+abre calculadora
+abre paint
+abre spotify
+abre discord
+abre steam
+abre explorer
+abre powershell
+```
+
+Las rutas principales se configuran en `config.py`, en la variable `APPS`.
+Si una app no abre en tu PC, revisa si esta instalada o ajusta su ruta.
+
+## Solucion de problemas
+
+### Ollama no esta instalado
+
+Instalalo desde:
+
+```text
+https://ollama.com/download
+```
+
+Luego abre una terminal y verifica:
+
+```powershell
+ollama --version
 ollama list
+```
 
-# Si no aparece "mistral", descárgalo:
-ollama pull mistral
+### Ollama no responde
 
-# Luego inicia Ollama
+Inicia el servidor:
+
+```powershell
 ollama serve
 ```
 
-### Error: "Puerto 11434 ya en uso"
-
-Significa Ollama **ya está corriendo**. Solo abre otra terminal para ZeroTwo.
-
-### Error de audio
-
-La voz se genera como MP3 con `edge-tts` y se reproduce con `pygame`.
-Si no escuchas nada, revisa el volumen de Windows y ejecuta:
+En otra terminal, verifica el modelo:
 
 ```powershell
-pip install -r requirements.txt
+ollama list
+ollama pull llama3.2:1b
 ```
 
----
+### El modelo responde muy lento
 
-## 🎙️ Modos de Uso
-
-**Modo Texto:**
-
-```
-Tú: hola
-ZeroTwo: [respuesta en texto]
-```
-
-**Modo Voz:**
-
-```
-Tú: [presiona Enter]
-🎙 Escuchando (6 segundos)...
-ZeroTwo: [respuesta en voz + texto]
-```
-
-**Modo Híbrido (Default):**
-
-- Enter vacío = graba voz
-- Escribir = usa texto
-- Responde siempre en voz + texto
-
----
-
-## 📋 Requisitos
-
-✅ Python 3.11
-✅ Ollama + modelo "llama3.2:1b"
-✅ Dependencias Python del archivo `requirements.txt`
-
-Instalación recomendada:
+Usa el modelo rapido:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
+set ZEROTWO_MODEL=llama3.2:1b
+.\INICIAR.bat
 ```
 
----
+Tambien ayuda cerrar programas pesados y evitar modelos grandes si no tienes
+GPU suficiente.
 
-## 🚀 Estado del Proyecto
+### No se escucha la voz
 
-| Componente             | Estado                   |
-| ---------------------- | ------------------------ |
-| STT (Voz → Texto)      | ✅ Funciona              |
-| TTS (Texto → Voz)      | ✅ Funciona (edge-tts)   |
-| Intención (regex+LLM)  | ✅ Funciona              |
-| Ollama (Mistral)       | ⚠️ Requiere verificación |
-| Personalidad Zero Two  | ✅ Funciona              |
-| Base de datos (Memory) | ✅ Funciona              |
+Revisa:
 
----
+- Volumen de Windows.
+- Dispositivo de salida correcto.
+- Que `pygame` este instalado desde `requirements.txt`.
+- Que tengas internet para que `edge-tts` genere la voz.
 
-## 💾 Estructura
+Puedes reinstalar dependencias con:
 
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
+
+### El microfono se queda grabando o no escucha
+
+Revisa permisos de microfono en Windows y prueba cerrar otras apps que esten
+usando el microfono. La app debe grabar una sola toma por activacion.
+
+### Word no abre
+
+Verifica que Microsoft Office este instalado. Si el comando automatico no lo
+encuentra, edita `config.py` y cambia la ruta de `word` dentro de `APPS`.
+
+Ejemplo:
+
+```python
+APPS = {
+    "word": r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
+}
+```
+
+## Estructura del proyecto
+
+```text
 ZeroTwoIA/
-├── main.py                  # Punto de entrada en consola
-├── ui_app.py                # App visual de escritorio
-├── config.py                # Configuración
-├── INICIAR.bat              # Script de inicio
+├── main.py                    # Entrada modo consola
+├── ui_app.py                  # Interfaz visual
+├── config.py                  # Modelo, voz, rutas y opciones
+├── requirements.txt           # Dependencias Python
+├── INICIAR.bat                # Inicio normal
+├── INSTALAR_TODO.bat          # Instalacion completa para PC nueva
+├── COMPILAR_EXE.bat           # Build con PyInstaller
+├── EJECUTAR_EXE.bat           # Ejecuta el build compilado
+├── CREAR_ACCESO_DIRECTO.bat   # Acceso directo con icono
+├── DIAGNOSTICO.bat            # Diagnostico del entorno
+├── ZeroTwoIA.spec             # Configuracion de PyInstaller
+├── assets/
+│   ├── zerotwo_icon.ico
+│   └── zerotwo_icon.png
 ├── core/
-│   ├── core_brain.py        # Ollama + LLM
-│   ├── intent.py            # Detección de intención
-│   ├── memory.py            # Base de datos
-│   └── personality.py       # Prompt de Zero Two
+│   ├── core_brain.py          # Conexion con Ollama
+│   ├── intent.py              # Deteccion de intencion
+│   ├── memory.py              # Memoria SQLite
+│   └── personality.py         # Prompt/persona de ZeroTwo
 ├── agents/
-│   ├── code_agent.py        # Agente de programación
-│   ├── system_agent.py      # Agente de sistema
-│   └── web_agent.py         # Agente web
+│   ├── code_agent.py          # Ayuda de programacion
+│   ├── system_agent.py        # Acciones del sistema
+│   └── web_agent.py           # Busqueda web / URLs
 ├── tools/
-│   ├── app_launcher.py      # Abrir aplicaciones
-│   └── browser.py           # Búsqueda web
-└── voice/
-    ├── stt.py               # Speech-to-Text (Whisper)
-    ├── tts.py               # Text-to-Speech (edge-tts)
-    └── data/
-        └── zerotwo_voice.wav # Referencia de voz
+│   ├── app_launcher.py        # Apertura de aplicaciones
+│   └── browser.py             # Utilidades web
+├── voice/
+│   ├── stt.py                 # Voz a texto
+│   └── tts.py                 # Texto a voz
+└── data/
+    └── memory.db              # Memoria local generada
 ```
 
----
+## Estado actual
 
-**Próximos pasos:**
+| Componente | Estado |
+| --- | --- |
+| App visual | Funcional |
+| Chat de texto | Funcional |
+| Voz TTS | Funcional con `edge-tts` + `pygame` |
+| Microfono STT | Funcional con Whisper |
+| Memoria local | Funcional con SQLite |
+| Comandos de Windows | Funcionales, dependen de rutas/apps instaladas |
+| Build `.exe` | Preparado con PyInstaller |
+| Instalacion completa | Preparada con `INSTALAR_TODO.bat` |
 
-1. Verifica que `ollama list` muestre "llama3.2:1b"
-2. Inicia con `INICIAR.bat` o manualmente
-3. Escribe "Hola" y disfruta 🎉
+## Flujo recomendado de desarrollo
+
+```powershell
+git pull origin main
+.\INICIAR.bat
+```
+
+Para probar build:
+
+```powershell
+.\COMPILAR_EXE.bat
+.\EJECUTAR_EXE.bat
+```
+
+Para preparar una PC limpia:
+
+```powershell
+.\INSTALAR_TODO.bat
+```
