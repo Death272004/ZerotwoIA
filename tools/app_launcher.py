@@ -19,6 +19,8 @@ ALIASES = {
     "visual studio code": "vscode",
     "power point": "powerpoint",
     "calc": "calculadora",
+    "explorador": "explorer",
+    "terminal": "powershell",
 }
 
 DISPLAY_NAMES = {
@@ -30,6 +32,13 @@ DISPLAY_NAMES = {
     "excel": "Excel",
     "powerpoint": "PowerPoint",
     "calculadora": "Calculadora",
+    "paint": "Paint",
+    "spotify": "Spotify",
+    "discord": "Discord",
+    "steam": "Steam",
+    "explorer": "Explorador de archivos",
+    "cmd": "Consola",
+    "powershell": "PowerShell",
 }
 
 OFFICE_EXES = {
@@ -43,6 +52,17 @@ WINDOWS_PROTOCOLS = {
     "excel": "ms-excel:",
     "powerpoint": "ms-powerpoint:",
     "calculadora": "calculator:",
+}
+
+WINDOWS_STORE_APPS = {
+    "spotify": "spotify:",
+}
+
+WINDOWS_BUILTINS = {
+    "paint": [["mspaint.exe"], ["mspaint"]],
+    "explorer": [["explorer.exe"], ["explorer"]],
+    "cmd": [["cmd.exe"]],
+    "powershell": [["powershell.exe"], ["pwsh.exe"]],
 }
 
 
@@ -125,6 +145,8 @@ def _candidate_commands(name: str) -> list[list[str]]:
     if name == "notepad":
         commands.extend([["notepad.exe"], ["notepad"]])
 
+    commands.extend(WINDOWS_BUILTINS.get(name, []))
+
     return commands
 
 
@@ -157,12 +179,32 @@ def _try_cmd_start(target: str) -> bool:
         return False
 
 
+def _is_safe_app_name(target: str) -> bool:
+    allowed = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ._-")
+    return bool(target.strip()) and all(char in allowed for char in target) and len(target) <= 60
+
+
+def _try_windows_launcher(app: str) -> bool:
+    """Usa ShellExecute via cmd/start para apps registradas en Windows."""
+    if os.name != "nt" or not _is_safe_app_name(app):
+        return False
+
+    candidates = [app]
+    if not app.lower().endswith(".exe"):
+        candidates.append(f"{app}.exe")
+
+    for target in candidates:
+        if _try_cmd_start(target):
+            return True
+    return False
+
+
 def open_app(name: str) -> str:
     app = _canonical_name(name)
     display = DISPLAY_NAMES.get(app, app)
 
-    if app not in APPS and app not in OFFICE_EXES and app not in WINDOWS_PROTOCOLS:
-        return f"No tengo registrada la aplicacion '{name}'."
+    known_app = app in APPS or app in OFFICE_EXES or app in WINDOWS_PROTOCOLS or app in WINDOWS_BUILTINS
+    known_app = known_app or app in WINDOWS_STORE_APPS
 
     errors = []
     for command in _candidate_commands(app):
@@ -178,12 +220,23 @@ def open_app(name: str) -> str:
     if protocol and _try_startfile(protocol):
         return f"Abriendo {display}, Darling."
 
+    store_protocol = WINDOWS_STORE_APPS.get(app)
+    if store_protocol and _try_startfile(store_protocol):
+        return f"Abriendo {display}, Darling."
+
     if app in OFFICE_EXES and _try_cmd_start(OFFICE_EXES[app]):
         return f"Intentando abrir {display}, Darling."
+
+    if _try_windows_launcher(app):
+        if known_app:
+            return f"Intentando abrir {display}, Darling."
+        return f"Buscando y abriendo {display} desde Windows, Darling."
 
     hint = ""
     if app in OFFICE_EXES:
         hint = " Revisa que Microsoft Office este instalado o agrega la ruta exacta en config.py."
     elif errors:
         hint = f" Ultimo error: {errors[-1]}"
+    elif not known_app:
+        hint = " Si Windows no la abre, agrega su ruta exacta en config.py."
     return f"No pude abrir {display}.{hint}"

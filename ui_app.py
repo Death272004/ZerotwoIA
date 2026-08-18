@@ -24,6 +24,7 @@ TEXT = "#f2f5fb"
 MUTED = "#94a3b8"
 ACCENT = "#ff4f87"
 ACCENT_2 = "#5eead4"
+ACCENT_3 = "#a78bfa"
 USER_BG = "#243045"
 BOT_BG = "#1d2230"
 ERROR_BG = "#3b1d2b"
@@ -54,6 +55,10 @@ class ZeroTwoApp(tk.Tk):
         self.spectrum_rings = []
         self.spectrum_dots = []
         self.spectrum_orbit_lines = []
+        self.spectrum_ticks = []
+        self.spectrum_scan = None
+        self.spectrum_core = None
+        self.spectrum_core_glow = None
         self.intro_spoken = False
 
         self._build_style()
@@ -106,7 +111,7 @@ class ZeroTwoApp(tk.Tk):
         tk.Label(title_box, text="ZeroTwoIA", bg=APP_BG, fg=TEXT, font=("Segoe UI", 24, "bold")).pack(anchor="w")
         self.status_label = tk.Label(
             title_box,
-            text="Lista para escucharte, Darling.",
+            text="Nucleo activo. Lista para escucharte, Darling.",
             bg=APP_BG,
             fg=MUTED,
             font=("Segoe UI", 10),
@@ -145,15 +150,18 @@ class ZeroTwoApp(tk.Tk):
         right.pack(side="right", fill="y", padx=(18, 0))
         right.pack_propagate(False)
 
-        tk.Label(right, text="Audio", bg=PANEL_BG, fg=TEXT, font=("Segoe UI", 16, "bold")).pack(
+        tk.Label(right, text="Nucleo", bg=PANEL_BG, fg=TEXT, font=("Segoe UI", 16, "bold")).pack(
             anchor="w", padx=18, pady=(18, 4)
         )
-        tk.Label(right, text="Entrada, respuesta y voz", bg=PANEL_BG, fg=MUTED, font=("Segoe UI", 9)).pack(
+        tk.Label(right, text="Voz, comandos y respuesta", bg=PANEL_BG, fg=MUTED, font=("Segoe UI", 9)).pack(
             anchor="w", padx=18
         )
 
-        self.spectrum = tk.Canvas(right, bg="#0f1420", height=210, highlightthickness=0)
+        self.spectrum = tk.Canvas(right, bg="#070a12", height=238, highlightthickness=0)
         self.spectrum.pack(fill="x", padx=18, pady=18)
+        self.spectrum_core_glow = self.spectrum.create_oval(0, 0, 0, 0, fill="#1d0b26", outline="")
+        self.spectrum_core = self.spectrum.create_oval(0, 0, 0, 0, fill="#ff4f87", outline="")
+        self.spectrum_scan = self.spectrum.create_line(0, 0, 0, 0, fill="#5eead4", width=2, capstyle="round")
         for _ in range(5):
             self.spectrum_rings.append(self.spectrum.create_oval(0, 0, 0, 0, outline="#1f2937", width=1))
         for _ in range(6):
@@ -166,12 +174,38 @@ class ZeroTwoApp(tk.Tk):
             self.spectrum_rays.append(
                 self.spectrum.create_line(0, 0, 0, 0, fill=ACCENT, width=2, capstyle="round")
             )
+        for _ in range(72):
+            self.spectrum_ticks.append(
+                self.spectrum.create_line(0, 0, 0, 0, fill="#263142", width=1, capstyle="round")
+            )
+
+        self.mode_label = tk.Label(
+            right,
+            text="IDLE / STANDBY",
+            bg="#111827",
+            fg=ACCENT_2,
+            font=("Consolas", 10, "bold"),
+            padx=10,
+            pady=7,
+        )
+        self.mode_label.pack(fill="x", padx=18, pady=(0, 12))
 
         self.mic_button = ttk.Button(right, text="Microfono", style="ZeroTwo.TButton", command=self.start_voice)
         self.mic_button.pack(fill="x", padx=18, pady=(2, 10))
 
         self.stop_button = ttk.Button(right, text="Detener voz", style="Ghost.TButton", command=self.stop_voice)
         self.stop_button.pack(fill="x", padx=18, pady=(0, 10))
+
+        quick = tk.Frame(right, bg=PANEL_BG)
+        quick.pack(fill="x", padx=18, pady=(4, 8))
+        for label, command in (("Word", "abre word"), ("Chrome", "abre chrome"), ("Calc", "abre calculadora")):
+            button = ttk.Button(
+                quick,
+                text=label,
+                style="Ghost.TButton",
+                command=lambda text=command: self._quick_command(text),
+            )
+            button.pack(side="left", fill="x", expand=True, padx=(0, 6))
 
         tk.Label(right, text="Tiempo", bg=PANEL_BG, fg=TEXT, font=("Segoe UI", 11, "bold")).pack(
             anchor="w", padx=18, pady=(14, 4)
@@ -205,13 +239,13 @@ class ZeroTwoApp(tk.Tk):
         self.send_button = ttk.Button(bottom, text="Enviar", style="ZeroTwo.TButton", command=self.send_text)
         self.send_button.pack(side="left", padx=(12, 0))
 
-        self._add_message("ZeroTwo", "Estoy aqui. Escribeme o abre el microfono cuando quieras.", "bot")
+        self._add_message("ZeroTwo", "Nucleo activo. Escribeme, abre el microfono o dame un comando.", "bot")
 
     def _present_on_startup(self):
         if self.intro_spoken:
             return
         self.intro_spoken = True
-        intro = "Zero Two en linea. Hm... ya desperte, Darling. Dime que haremos primero."
+        intro = "Zero Two en linea. Nucleo activo, voz lista y comandos preparados. Dime que haremos primero, Darling."
         self._set_mode("speaking", "Presentandome con voz...")
         self._speak_async(intro)
 
@@ -262,6 +296,26 @@ class ZeroTwoApp(tk.Tk):
     def _set_mode(self, mode, status):
         self.mode = mode
         self.status_label.configure(text=status)
+        labels = {
+            "idle": "IDLE / STANDBY",
+            "recording": "VOICE INPUT",
+            "thinking": "ANALYZING",
+            "speaking": "VOICE OUTPUT",
+        }
+        colors = {
+            "idle": ACCENT_2,
+            "recording": "#60a5fa",
+            "thinking": ACCENT_3,
+            "speaking": ACCENT,
+        }
+        if hasattr(self, "mode_label"):
+            self.mode_label.configure(text=labels.get(mode, mode.upper()), fg=colors.get(mode, TEXT))
+
+    def _quick_command(self, text):
+        if self.busy:
+            return
+        self.input_var.set(text)
+        self.send_text()
 
     def send_text(self):
         text = self.input_var.get().strip()
@@ -489,6 +543,55 @@ class ZeroTwoApp(tk.Tk):
                 cy + ring_radius,
             )
             self.spectrum.itemconfig(ring, outline=outline, width=1 + (i // 2))
+
+        core_radius = radius * (0.17 + base * 0.05)
+        glow_radius = core_radius * 2.15
+        self.spectrum.coords(
+            self.spectrum_core_glow,
+            cx - glow_radius,
+            cy - glow_radius,
+            cx + glow_radius,
+            cy + glow_radius,
+        )
+        self.spectrum.itemconfig(
+            self.spectrum_core_glow,
+            fill="#102a2a" if self.mode == "recording" else "#2a1026",
+        )
+        self.spectrum.coords(
+            self.spectrum_core,
+            cx - core_radius,
+            cy - core_radius,
+            cx + core_radius,
+            cy + core_radius,
+        )
+        self.spectrum.itemconfig(self.spectrum_core, fill=color)
+
+        scan_angle = now * 2.8
+        scan_len = radius * 1.36
+        self.spectrum.coords(
+            self.spectrum_scan,
+            cx,
+            cy,
+            cx + math.cos(scan_angle) * scan_len,
+            cy + math.sin(scan_angle) * scan_len,
+        )
+        self.spectrum.itemconfig(self.spectrum_scan, fill="#5eead4" if self.mode == "recording" else "#ff4f87")
+
+        tick_count = len(self.spectrum_ticks)
+        tick_radius = radius * 1.47
+        for i, tick in enumerate(self.spectrum_ticks):
+            angle = (math.tau / tick_count) * i
+            major = i % 6 == 0
+            tick_len = 9 if major else 4
+            x1 = cx + math.cos(angle) * tick_radius
+            y1 = cy + math.sin(angle) * tick_radius
+            x2 = cx + math.cos(angle) * (tick_radius + tick_len)
+            y2 = cy + math.sin(angle) * (tick_radius + tick_len)
+            tick_color = "#5eead4" if self.mode == "recording" and major else "#352247"
+            if self.mode == "speaking" and major:
+                tick_color = "#ff4f87"
+            self.spectrum.coords(tick, x1, y1, x2, y2)
+            self.spectrum.itemconfig(tick, fill=tick_color, width=2 if major else 1)
 
         for i, arc in enumerate(self.spectrum_orbit_lines):
             tilt = 0.18 + i * 0.11

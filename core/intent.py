@@ -5,11 +5,14 @@ import ollama  # type: ignore
 from config import ENABLE_LLM_INTENT_FALLBACK, MODEL_NAME
 
 # Patrones rápidos — se evalúan antes de llamar al LLM
+_OPEN_VERB = r"\b(abre?|abrir|lanza?|lanzar|ejecuta?|ejecutar|inicia?|iniciar)\b"
+
 _PATTERNS = {
     "system": re.compile(
-        r"\b(abre?|abrir|lanza?|lanzar|ejecuta?|ejecutar|inicia?|iniciar)\b.{0,30}"
+        _OPEN_VERB + r".{0,40}"
         r"\b(chrome|firefox|notepad|vscode|visual studio|bloc de notas|calculadora|"
-        r"word|excel|powerpoint|power point)\b",
+        r"word|excel|powerpoint|power point|paint|spotify|discord|steam|explorador|"
+        r"explorer|cmd|terminal|powershell)\b",
         re.IGNORECASE
     ),
     "web": re.compile(
@@ -28,7 +31,8 @@ _PATTERNS = {
 # Extrae el nombre de app mencionado
 _APP_NAMES = re.compile(
     r"\b(chrome|firefox|notepad|vscode|visual studio|bloc de notas|calculadora|"
-    r"word|excel|powerpoint|power point)\b",
+    r"word|excel|powerpoint|power point|paint|spotify|discord|steam|explorador|"
+    r"explorer|cmd|terminal|powershell)\b",
     re.IGNORECASE
 )
 
@@ -36,7 +40,14 @@ _APP_ALIASES = {
     "visual studio": "vscode",
     "bloc de notas": "notepad",
     "power point": "powerpoint",
+    "explorador": "explorer",
+    "terminal": "powershell",
 }
+
+_GENERIC_OPEN = re.compile(
+    _OPEN_VERB + r"\s+(?:la\s+)?(?:app\s+)?(?:aplicacion\s+)?([a-zA-Z0-9 áéíóúñÁÉÍÓÚÑ._-]{2,40})$",
+    re.IGNORECASE,
+)
 
 
 def _extract_target(text: str) -> str:
@@ -90,6 +101,16 @@ def detect_intent(text: str) -> dict:
                 return {"type": "web", "query": text, "raw": text}
             if intent_type == "code":
                 return {"type": "code", "task": text, "raw": text}
+
+    generic_open = _GENERIC_OPEN.search(text.strip())
+    if generic_open:
+        target = " ".join(generic_open.group(2).strip().lower().split())
+        return {
+            "type": "system",
+            "action": "open_app",
+            "target": _APP_ALIASES.get(target, target),
+            "raw": text,
+        }
 
     if ENABLE_LLM_INTENT_FALLBACK:
         return _llm_fallback(text)
