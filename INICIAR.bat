@@ -81,7 +81,18 @@ if errorlevel 1 (
 echo.
 echo Iniciando ZeroTwoIA...
 echo.
-"%PYTHON_EXE%" main.py
+
+if /I "%ZEROTWO_MODE%"=="console" (
+    "%PYTHON_EXE%" main.py
+) else (
+    set "PYTHONW_EXE=%VENV_DIR%\Scripts\pythonw.exe"
+    if exist "%PYTHONW_EXE%" (
+        start "ZeroTwoIA" "%PYTHONW_EXE%" "%~dp0ui_app.py"
+    ) else (
+        start "ZeroTwoIA" "%PYTHON_EXE%" "%~dp0ui_app.py"
+    )
+    exit /b 0
+)
 
 echo.
 echo ZeroTwoIA se cerro.

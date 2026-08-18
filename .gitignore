@@ -1,11 +1,2 @@
 __pycache__/
-*.py[cod]
-*.sqlite
-*.db-journal
-.venv/
-venv/
-audio.wav
-test_audio.wav
-data/response.wav
-__pycache__/
 *.pyc

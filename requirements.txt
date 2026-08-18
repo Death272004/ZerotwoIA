@@ -2,5 +2,6 @@ edge-tts
 faster-whisper
 numpy
 ollama
+pygame
 scipy
 sounddevice

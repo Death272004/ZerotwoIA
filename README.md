@@ -2,13 +2,21 @@
 
 ## ⚡ Inicio Rápido
 
-### Opción 1: Doble clic (Recomendado)
+### Opción 1: App visual (Recomendado)
 
 1. Ve a la carpeta del proyecto
 2. **Doble clic en `INICIAR.bat`**
-3. Se abren 2 ventanas automáticamente
+3. Se abre la ventana de ZeroTwoIA
 
-### Opción 2: Terminal manual
+La app visual incluye:
+
+- Chat dedicado para escribir y leer respuestas.
+- Botón de micrófono para hablarle.
+- Respuesta por voz con `edge-tts`.
+- Contador de tiempo de respuesta.
+- Espectro animado para grabación, pensamiento y voz.
+
+### Opción 2: Consola manual
 
 **Terminal 1 - Ollama:**
 
@@ -21,6 +29,37 @@ ollama serve
 ```powershell
 cd "ruta\a\ZeroTwoIA"
 python main.py
+```
+
+También puedes usar el `.bat` en modo consola:
+
+```powershell
+set ZEROTWO_MODE=console
+INICIAR.bat
+```
+
+### Opción 3: Ejecutable de Windows
+
+Para generar una carpeta distribuible con `ZeroTwoIA.exe`:
+
+```bat
+COMPILAR_EXE.bat
+```
+
+El resultado queda en:
+
+```text
+dist\ZeroTwoIA\ZeroTwoIA.exe
+```
+
+Copia la carpeta completa `dist\ZeroTwoIA` si quieres mover la app a otro equipo.
+El ejecutable incluye la interfaz visual y el icono de ZeroTwoIA, pero sigue
+necesitando Ollama instalado en Windows para responder con el modelo local.
+
+Para ejecutar el build desde el proyecto:
+
+```bat
+EJECUTAR_EXE.bat
 ```
 
 ---
@@ -80,7 +119,7 @@ ZeroTwo: [respuesta en voz + texto]
 ## 📋 Requisitos
 
 ✅ Python 3.11
-✅ Ollama + modelo "mistral"
+✅ Ollama + modelo "llama3.2:1b"
 ✅ Dependencias Python del archivo `requirements.txt`
 
 Instalación recomendada:
@@ -110,7 +149,8 @@ pip install -r requirements.txt
 
 ```
 ZeroTwoIA/
-├── main.py                  # Punto de entrada
+├── main.py                  # Punto de entrada en consola
+├── ui_app.py                # App visual de escritorio
 ├── config.py                # Configuración
 ├── INICIAR.bat              # Script de inicio
 ├── core/
@@ -136,6 +176,6 @@ ZeroTwoIA/
 
 **Próximos pasos:**
 
-1. Verifica que `ollama list` muestre "mistral"
+1. Verifica que `ollama list` muestre "llama3.2:1b"
 2. Inicia con `INICIAR.bat` o manualmente
 3. Escribe "Hola" y disfruta 🎉
