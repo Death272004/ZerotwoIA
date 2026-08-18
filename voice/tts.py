@@ -4,6 +4,7 @@ import threading
 import time
 from pathlib import Path
 from edge_tts import Communicate
+from config import TTS_PITCH, TTS_RATE, TTS_VOICE
 
 try:
     import pygame
@@ -11,7 +12,7 @@ except ImportError:
     pygame = None
 
 VOICE_BY_LANGUAGE = {
-    "es": "es-AR-ElenaNeural",  # Voz femenina en espanol, buena para ZeroTwo.
+    "es": TTS_VOICE,
 }
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -51,7 +52,7 @@ def speak(text: str, output_path: str = "data/response.mp3", language: str = "es
 
     async def _tts():
         voice = VOICE_BY_LANGUAGE.get(language, VOICE_BY_LANGUAGE["es"])
-        communicate = Communicate(text, voice)
+        communicate = Communicate(text, voice, rate=TTS_RATE, pitch=TTS_PITCH)
         await communicate.save(str(output_file))
 
     try:

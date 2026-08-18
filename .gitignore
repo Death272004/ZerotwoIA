@@ -1,2 +1,13 @@
 __pycache__/
-*.pyc
+*.py[cod]
+*.sqlite
+*.db-journal
+.venv/
+venv/
+build/
+dist/
+audio.wav
+test_audio.wav
+data/response.wav
+data/response.mp3
+data/input_voice.wav

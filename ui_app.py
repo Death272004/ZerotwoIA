@@ -50,12 +50,17 @@ class ZeroTwoApp(tk.Tk):
         self.bot_stream_widget = None
         self.bot_stream_text = ""
         self.audio_level = 0.0
-        self.bars = []
+        self.spectrum_rays = []
+        self.spectrum_rings = []
+        self.spectrum_dots = []
+        self.spectrum_orbit_lines = []
+        self.intro_spoken = False
 
         self._build_style()
         self._build_layout()
         self._animate_spectrum()
         self._drain_events()
+        self.after(650, self._present_on_startup)
 
     def _set_window_icon(self):
         icon_path = resource_path("assets/zerotwo_icon.ico")
@@ -147,10 +152,20 @@ class ZeroTwoApp(tk.Tk):
             anchor="w", padx=18
         )
 
-        self.spectrum = tk.Canvas(right, bg="#0f1420", height=190, highlightthickness=0)
+        self.spectrum = tk.Canvas(right, bg="#0f1420", height=210, highlightthickness=0)
         self.spectrum.pack(fill="x", padx=18, pady=18)
-        for _ in range(24):
-            self.bars.append(self.spectrum.create_rectangle(0, 0, 0, 0, fill=ACCENT, width=0))
+        for _ in range(5):
+            self.spectrum_rings.append(self.spectrum.create_oval(0, 0, 0, 0, outline="#1f2937", width=1))
+        for _ in range(6):
+            self.spectrum_orbit_lines.append(
+                self.spectrum.create_arc(0, 0, 0, 0, start=0, extent=360, style="arc", outline="#3b1a5f", width=1)
+            )
+        for _ in range(145):
+            self.spectrum_dots.append(self.spectrum.create_oval(0, 0, 0, 0, fill="#6129ff", outline=""))
+        for _ in range(96):
+            self.spectrum_rays.append(
+                self.spectrum.create_line(0, 0, 0, 0, fill=ACCENT, width=2, capstyle="round")
+            )
 
         self.mic_button = ttk.Button(right, text="Microfono", style="ZeroTwo.TButton", command=self.start_voice)
         self.mic_button.pack(fill="x", padx=18, pady=(2, 10))
@@ -191,6 +206,14 @@ class ZeroTwoApp(tk.Tk):
         self.send_button.pack(side="left", padx=(12, 0))
 
         self._add_message("ZeroTwo", "Estoy aqui. Escribeme o abre el microfono cuando quieras.", "bot")
+
+    def _present_on_startup(self):
+        if self.intro_spoken:
+            return
+        self.intro_spoken = True
+        intro = "Zero Two en linea. Hm... ya desperte, Darling. Dime que haremos primero."
+        self._set_mode("speaking", "Presentandome con voz...")
+        self._speak_async(intro)
 
     def _on_chat_configure(self, _event=None):
         self.chat_canvas.configure(scrollregion=self.chat_canvas.bbox("all"))
@@ -389,6 +412,8 @@ class ZeroTwoApp(tk.Tk):
             self._set_busy(False)
             self._set_mode("speaking", "Accion ejecutada. Hablando...")
             self._speak_async(text)
+        elif name == "action_feedback":
+            self._add_message("Sistema", event[1], "bot")
         elif name == "speaking":
             self._set_mode("speaking", "Voz de ZeroTwo activa.")
         elif name == "speaking_done":
@@ -403,7 +428,8 @@ class ZeroTwoApp(tk.Tk):
         try:
             action_type = action.get("type")
             if action_type == "open_app":
-                execute_command(action)
+                result = execute_command(action)
+                self.events.put(("action_feedback", result))
             elif action_type == "web_search":
                 query = action.get("query", "")
                 web_handle({"type": "web", "query": query, "raw": query})
@@ -428,9 +454,12 @@ class ZeroTwoApp(tk.Tk):
 
     def _animate_spectrum(self):
         width = max(self.spectrum.winfo_width(), 220)
-        height = max(self.spectrum.winfo_height(), 160)
-        gap = 4
-        bar_w = max(4, (width - gap * (len(self.bars) + 1)) / len(self.bars))
+        height = max(self.spectrum.winfo_height(), 190)
+        cx = width / 2
+        cy = height / 2
+        size = min(width, height)
+        radius = size * 0.31
+        max_ray = size * 0.16
 
         if self.mode == "recording":
             color = ACCENT_2
@@ -442,23 +471,103 @@ class ZeroTwoApp(tk.Tk):
             color = "#a78bfa"
             base = 0.35
         else:
-            color = "#334155"
+            color = "#7c3aed"
             base = 0.18
 
         now = time.time()
-        for i, item in enumerate(self.bars):
-            wave = abs(math.sin(now * 4.0 + i * 0.55))
-            jitter = random.random() * 0.22
-            level = min(1.0, base * (0.25 + wave * 0.75) + jitter)
+        pulse = 1 + math.sin(now * 3.2) * 0.035 + base * 0.03
+        glow_colors = ["#1f1140", "#34156f", "#7116c9", "#ff2e9f", "#ff6aa7"]
+
+        for i, ring in enumerate(self.spectrum_rings):
+            ring_radius = radius * pulse + i * 3.8
+            outline = glow_colors[min(i, len(glow_colors) - 1)]
+            self.spectrum.coords(
+                ring,
+                cx - ring_radius,
+                cy - ring_radius,
+                cx + ring_radius,
+                cy + ring_radius,
+            )
+            self.spectrum.itemconfig(ring, outline=outline, width=1 + (i // 2))
+
+        for i, arc in enumerate(self.spectrum_orbit_lines):
+            tilt = 0.18 + i * 0.11
+            wobble = math.sin(now * 1.5 + i) * 0.08
+            rx = radius * (0.72 + i * 0.045)
+            ry = radius * max(0.12, tilt + wobble)
+            angle_start = (now * 34 + i * 54) % 360
+            self.spectrum.coords(arc, cx - rx, cy - ry, cx + rx, cy + ry)
+            self.spectrum.itemconfig(
+                arc,
+                start=angle_start,
+                extent=250,
+                outline="#7c1dff" if i % 2 else "#ff2e9f",
+                width=1,
+            )
+
+        dot_count = len(self.spectrum_dots)
+        columns = 17
+        rows = 17
+        used = 0
+        spin = now * 0.85
+        for row in range(rows):
+            y_norm = -1 + (2 * row / (rows - 1))
+            row_width = math.sqrt(max(0.0, 1 - y_norm * y_norm))
+            for col in range(columns):
+                if used >= dot_count:
+                    break
+                x_norm = -1 + (2 * col / (columns - 1))
+                if abs(x_norm) > row_width:
+                    self.spectrum.coords(self.spectrum_dots[used], 0, 0, 0, 0)
+                    used += 1
+                    continue
+
+                z = math.sqrt(max(0.0, 1 - x_norm * x_norm - y_norm * y_norm))
+                sphere_x = x_norm * math.cos(spin) + z * math.sin(spin)
+                depth = 0.55 + 0.45 * (z * math.cos(spin) - x_norm * math.sin(spin))
+                wave = math.sin(now * 4.8 + row * 0.8 + col * 0.33) * 0.5 + 0.5
+                dot_r = 1.2 + depth * 1.4 + base * wave * 1.2
+                px = cx + sphere_x * radius * 0.82
+                py = cy + y_norm * radius * 0.82
+                dot_color = "#ff2e9f" if depth > 0.78 else "#7c1dff"
+                if self.mode == "recording":
+                    dot_color = "#5eead4" if depth > 0.78 else "#2563eb"
+                self.spectrum.coords(
+                    self.spectrum_dots[used],
+                    px - dot_r,
+                    py - dot_r,
+                    px + dot_r,
+                    py + dot_r,
+                )
+                self.spectrum.itemconfig(self.spectrum_dots[used], fill=dot_color)
+                used += 1
+
+        while used < dot_count:
+            self.spectrum.coords(self.spectrum_dots[used], 0, 0, 0, 0)
+            used += 1
+
+        ray_count = len(self.spectrum_rays)
+        for i, item in enumerate(self.spectrum_rays):
+            angle = (math.tau / ray_count) * i - math.pi / 2
+            wave = abs(math.sin(now * 4.3 + i * 0.42))
+            secondary = abs(math.sin(now * 2.1 - i * 0.18))
+            jitter = random.random() * 0.16
+            level = min(1.0, base * (0.22 + wave * 0.58 + secondary * 0.2) + jitter)
             if self.mode == "idle":
-                level *= 0.45
-            bar_h = max(8, level * (height - 24))
-            x1 = gap + i * (bar_w + gap)
-            x2 = x1 + bar_w
-            y1 = height - 12 - bar_h
-            y2 = height - 12
+                level *= 0.55
+
+            inner = radius * 1.02
+            outer = inner + max(5, level * max_ray)
+            x1 = cx + math.cos(angle) * inner
+            y1 = cy + math.sin(angle) * inner
+            x2 = cx + math.cos(angle) * outer
+            y2 = cy + math.sin(angle) * outer
+            width_px = 1 if self.mode == "idle" else 2
+            ray_color = "#ff2e9f" if i < ray_count * 0.46 or i > ray_count * 0.82 else "#5427ff"
+            if self.mode == "recording":
+                ray_color = "#5eead4" if i % 3 else "#3b82f6"
             self.spectrum.coords(item, x1, y1, x2, y2)
-            self.spectrum.itemconfig(item, fill=color)
+            self.spectrum.itemconfig(item, fill=ray_color if self.mode != "thinking" else color, width=width_px)
 
         self.audio_level *= 0.82
         self.after(55, self._animate_spectrum)

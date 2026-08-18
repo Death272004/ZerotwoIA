@@ -54,6 +54,9 @@ echo.
 echo Build terminado:
 echo dist\ZeroTwoIA\ZeroTwoIA.exe
 echo.
+echo Para crear el acceso directo del escritorio con icono:
+echo CREAR_ACCESO_DIRECTO.bat
+echo.
 echo Copia la carpeta completa dist\ZeroTwoIA para llevar la app a otro equipo.
 echo El otro equipo tambien necesita Ollama instalado y el modelo configurado.
 pause
