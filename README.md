@@ -12,6 +12,7 @@ La app visual incluye:
 
 - Chat dedicado para escribir y leer respuestas.
 - Botón de micrófono para hablarle.
+- Botón para cambiar la voz y escuchar una prueba rápida.
 - Respuesta por voz con `edge-tts`.
 - Contador de tiempo de respuesta.
 - Espectro animado para grabación, pensamiento y voz.
@@ -85,9 +86,14 @@ ollama serve
 
 Significa Ollama **ya está corriendo**. Solo abre otra terminal para ZeroTwo.
 
-### Error de audio (wav inválido)
+### Error de audio
 
-Se corrigió automáticamente. Ahora usa `winsound` nativo.
+La voz se genera como MP3 con `edge-tts` y se reproduce con `pygame`.
+Si no escuchas nada, revisa el volumen de Windows y ejecuta:
+
+```powershell
+pip install -r requirements.txt
+```
 
 ---
 

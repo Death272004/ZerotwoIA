@@ -1,10 +1,11 @@
 import asyncio
+import json
 import os
 import threading
 import time
 from pathlib import Path
 from edge_tts import Communicate
-from config import TTS_PITCH, TTS_RATE, TTS_VOICE
+from config import TTS_PITCH, TTS_PRESET, TTS_RATE, TTS_VOICE, VOICE_PRESETS
 
 try:
     import pygame
@@ -16,8 +17,66 @@ VOICE_BY_LANGUAGE = {
 }
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+VOICE_CONFIG_PATH = PROJECT_ROOT / "data" / "voice_config.json"
 _playback_active = threading.Event()
+_voice_lock = threading.Lock()
+_active_preset_id = None
 _pygame_ready = False
+
+
+def _preset_by_id(preset_id: str) -> dict:
+    for preset in VOICE_PRESETS:
+        if preset["id"] == preset_id:
+            return preset
+    return VOICE_PRESETS[0]
+
+
+def _load_preset_id() -> str:
+    try:
+        if VOICE_CONFIG_PATH.exists():
+            data = json.loads(VOICE_CONFIG_PATH.read_text(encoding="utf-8"))
+            return data.get("preset_id") or TTS_PRESET
+    except Exception:
+        pass
+    return TTS_PRESET
+
+
+def _save_preset_id(preset_id: str) -> None:
+    VOICE_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    VOICE_CONFIG_PATH.write_text(json.dumps({"preset_id": preset_id}, indent=2), encoding="utf-8")
+
+
+def get_voice_presets() -> list[dict]:
+    """Devuelve las voces disponibles para la interfaz."""
+    return [dict(preset) for preset in VOICE_PRESETS]
+
+
+def get_voice_preset() -> dict:
+    """Devuelve la voz activa, leyendo la preferencia guardada una sola vez."""
+    global _active_preset_id
+    with _voice_lock:
+        if _active_preset_id is None:
+            _active_preset_id = _load_preset_id()
+        return dict(_preset_by_id(_active_preset_id))
+
+
+def set_voice_preset(preset_id: str, persist: bool = True) -> dict:
+    """Cambia la voz activa para las siguientes respuestas."""
+    global _active_preset_id
+    preset = _preset_by_id(preset_id)
+    with _voice_lock:
+        _active_preset_id = preset["id"]
+        if persist:
+            _save_preset_id(_active_preset_id)
+    return dict(preset)
+
+
+def cycle_voice_preset() -> dict:
+    """Avanza a la siguiente voz disponible."""
+    current = get_voice_preset()["id"]
+    ids = [preset["id"] for preset in VOICE_PRESETS]
+    next_index = (ids.index(current) + 1) % len(ids) if current in ids else 0
+    return set_voice_preset(ids[next_index])
 
 
 def is_playing() -> bool:
@@ -51,8 +110,11 @@ def speak(text: str, output_path: str = "data/response.mp3", language: str = "es
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     async def _tts():
-        voice = VOICE_BY_LANGUAGE.get(language, VOICE_BY_LANGUAGE["es"])
-        communicate = Communicate(text, voice, rate=TTS_RATE, pitch=TTS_PITCH)
+        preset = get_voice_preset()
+        voice = preset.get("voice") or VOICE_BY_LANGUAGE.get(language, VOICE_BY_LANGUAGE["es"])
+        rate = preset.get("rate") or TTS_RATE
+        pitch = preset.get("pitch") or TTS_PITCH
+        communicate = Communicate(text, voice, rate=rate, pitch=pitch)
         await communicate.save(str(output_file))
 
     try:

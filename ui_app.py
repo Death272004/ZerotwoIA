@@ -14,7 +14,7 @@ from agents.system_agent import execute_command
 from agents.web_agent import handle as web_handle
 from core.core_brain import enviar_mensaje_streaming
 from core.intent import detect_intent
-from voice.tts import is_playing, speak_and_play, stop_playback
+from voice.tts import cycle_voice_preset, get_voice_preset, is_playing, speak_and_play, stop_playback
 
 
 APP_BG = "#0d1018"
@@ -196,6 +196,18 @@ class ZeroTwoApp(tk.Tk):
         self.stop_button = ttk.Button(right, text="Detener voz", style="Ghost.TButton", command=self.stop_voice)
         self.stop_button.pack(fill="x", padx=18, pady=(0, 10))
 
+        self.voice_label = tk.Label(
+            right,
+            text=f"Voz: {get_voice_preset()['name']}",
+            bg=PANEL_BG,
+            fg=MUTED,
+            font=("Segoe UI", 9),
+        )
+        self.voice_label.pack(fill="x", padx=18, pady=(0, 8))
+
+        self.voice_button = ttk.Button(right, text="Cambiar voz", style="Ghost.TButton", command=self.change_voice)
+        self.voice_button.pack(fill="x", padx=18, pady=(0, 10))
+
         quick = tk.Frame(right, bg=PANEL_BG)
         quick.pack(fill="x", padx=18, pady=(4, 8))
         for label, command in (("Word", "abre word"), ("Chrome", "abre chrome"), ("Calc", "abre calculadora")):
@@ -292,6 +304,7 @@ class ZeroTwoApp(tk.Tk):
         state = "disabled" if busy else "normal"
         self.send_button.configure(state=state)
         self.mic_button.configure(state=state)
+        self.voice_button.configure(state=state)
 
     def _set_mode(self, mode, status):
         self.mode = mode
@@ -338,6 +351,16 @@ class ZeroTwoApp(tk.Tk):
         stop_playback()
         if not self.busy:
             self._set_mode("idle", "Voz detenida.")
+
+    def change_voice(self):
+        if self.busy:
+            return
+        stop_playback()
+        preset = cycle_voice_preset()
+        self.voice_label.configure(text=f"Voz: {preset['name']}")
+        self._add_message("Sistema", f"Voz cambiada: {preset['name']}", "bot")
+        self._set_mode("speaking", f"Probando voz: {preset['name']}")
+        self._speak_async(f"Voz {preset['name']} activada. Lista para ti, Darling.")
 
     def _voice_worker(self):
         try:

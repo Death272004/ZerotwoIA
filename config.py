@@ -23,6 +23,45 @@ ENABLE_LLM_INTENT_FALLBACK = False
 TTS_VOICE = os.getenv("ZEROTWO_VOICE", "es-MX-DaliaNeural")
 TTS_RATE = os.getenv("ZEROTWO_VOICE_RATE", "+8%")
 TTS_PITCH = os.getenv("ZEROTWO_VOICE_PITCH", "+12Hz")
+TTS_PRESET = os.getenv("ZEROTWO_VOICE_PRESET", "zerotwo")
+
+VOICE_PRESETS = [
+    {
+        "id": "zerotwo",
+        "name": "ZeroTwo",
+        "voice": TTS_VOICE,
+        "rate": TTS_RATE,
+        "pitch": TTS_PITCH,
+    },
+    {
+        "id": "latina_dulce",
+        "name": "Latina dulce",
+        "voice": "es-MX-DaliaNeural",
+        "rate": "+4%",
+        "pitch": "+8Hz",
+    },
+    {
+        "id": "piloto_energica",
+        "name": "Piloto energica",
+        "voice": "es-US-PalomaNeural",
+        "rate": "+12%",
+        "pitch": "+14Hz",
+    },
+    {
+        "id": "jarvis_seria",
+        "name": "Jarvis tactica",
+        "voice": "es-CO-SalomeNeural",
+        "rate": "+2%",
+        "pitch": "+2Hz",
+    },
+    {
+        "id": "suave_es",
+        "name": "Suave europea",
+        "voice": "es-ES-ElviraNeural",
+        "rate": "+0%",
+        "pitch": "+6Hz",
+    },
+]
 
 # Rutas de aplicaciones — edita aquí si cambias de PC
 APPS = {
