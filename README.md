@@ -17,6 +17,18 @@ La app visual incluye:
 - Contador de tiempo de respuesta.
 - Espectro animado para grabación, pensamiento y voz.
 
+### Opción 0: Instalar todo en una PC nueva
+
+Después de clonar el proyecto en Windows, ejecuta:
+
+```bat
+INSTALAR_TODO.bat
+```
+
+Ese script verifica Python y Ollama, intenta instalarlos con `winget` si faltan,
+crea `.venv`, instala dependencias, descarga el modelo `llama3.2:1b`, compila el
+`.exe` y crea el acceso directo del escritorio.
+
 ### Opción 2: Consola manual
 
 **Terminal 1 - Ollama:**

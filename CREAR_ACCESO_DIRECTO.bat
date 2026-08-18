@@ -2,6 +2,9 @@
 setlocal
 cd /d "%~dp0"
 
+set "SILENT=0"
+if /I "%~1"=="/silent" set "SILENT=1"
+
 set "APP_EXE=%~dp0dist\ZeroTwoIA\ZeroTwoIA.exe"
 set "APP_ICON=%~dp0assets\zerotwo_icon.ico"
 set "SHORTCUT_NAME=ZeroTwoIA.lnk"
@@ -9,7 +12,7 @@ set "SHORTCUT_NAME=ZeroTwoIA.lnk"
 if not exist "%APP_EXE%" (
     echo No encontre "%APP_EXE%".
     echo Ejecuta primero COMPILAR_EXE.bat para generar el ejecutable.
-    pause
+    if "%SILENT%"=="0" pause
     exit /b 1
 )
 
@@ -33,11 +36,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 if errorlevel 1 (
     echo.
     echo ERROR: No se pudo crear el acceso directo.
-    pause
+    if "%SILENT%"=="0" pause
     exit /b 1
 )
 
 echo.
 echo Listo. Si Windows sigue mostrando un icono viejo, elimina el acceso directo anterior
 echo del escritorio y ejecuta este archivo otra vez.
-pause
+if "%SILENT%"=="0" pause
